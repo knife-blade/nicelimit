@@ -5,6 +5,7 @@ import com.suchtool.nicelimit.annotation.EnableNiceLimit;
 import com.suchtool.nicelimit.filter.NiceLimitFilter;
 import com.suchtool.nicelimit.property.NiceLimitProperty;
 import org.redisson.api.RedissonClient;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +19,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.List;
 
 @Configuration(value = "com.suthtool.nicelimit.niceLimitConfiguration", proxyBeanMethods = false)
+@ConditionalOnProperty(name = "suchtool.nicelimit.inject", havingValue = "true")
 public class NiceLimitConfiguration implements ImportAware {
     @Nullable
     protected AnnotationAttributes enableNiceLimit;

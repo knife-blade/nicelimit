@@ -8,7 +8,7 @@ import java.time.Duration;
 @Data
 public class NiceLimitDetailProperty {
     /**
-     * URL
+     * URL（为了极致的效率，不支持通配符）
      */
     private String url;
 

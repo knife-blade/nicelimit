@@ -4,11 +4,17 @@ import lombok.Data;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @Data
 public class NiceLimitProperty {
     /**
-     * 是否启用
+     * 是否注入（是否注入容器）
+     */
+    private Boolean inject = true;
+
+    /**
+     * 是否启用（inject为true时，此配置才有效）
      */
     private Boolean enabled = true;
 
@@ -33,14 +39,21 @@ public class NiceLimitProperty {
     private String configKey = "niceLimit:config";
 
     /**
+     * 更新时用的锁的key（异步加锁，不影响业务性能）
+     */
+    private String updateLockKey = "niceLimit:update-lock";
+
+    /**
      * 限流器的key前缀
      */
     private String limiterKeyPrefix = "niceLimit:limiter";
 
     /**
      * 白名单
+     * 1.为了极致的效率，不支持通配符
+     * 2.默认是LinkedHashSet，查询速度极高
      */
-    private List<String> whiteUrl;
+    private Set<String> whiteUrl;
 
     /**
      * 详情
@@ -48,7 +61,7 @@ public class NiceLimitProperty {
     private List<NiceLimitDetailProperty> detail;
 
     /**
-     * 过滤器匹配模式
+     * 过滤器匹配模式（支持通配符，比如：/*）
      */
     private List<String> filterPattern = Collections.singletonList("/*");
 
