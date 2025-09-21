@@ -1,7 +1,6 @@
 package com.suchtool.nicelimit.configuration;
 
 
-import com.suchtool.nicelimit.annotation.EnableNiceLimit;
 import com.suchtool.nicelimit.filter.NiceLimitFilter;
 import com.suchtool.nicelimit.property.NiceLimitProperty;
 import org.redisson.api.RedissonClient;
@@ -10,24 +9,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.ImportAware;
-import org.springframework.core.annotation.AnnotationAttributes;
-import org.springframework.core.type.AnnotationMetadata;
-import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 
 @Configuration(value = "com.suthtool.nicelimit.niceLimitConfiguration", proxyBeanMethods = false)
 @ConditionalOnProperty(name = "suchtool.nicelimit.inject", havingValue = "true")
-public class NiceLimitConfiguration implements ImportAware {
-    @Nullable
-    protected AnnotationAttributes enableNiceLimit;
-
-    public void setImportMetadata(AnnotationMetadata importMetadata) {
-        this.enableNiceLimit = AnnotationAttributes.fromMap(
-                importMetadata.getAnnotationAttributes(EnableNiceLimit.class.getName(), false));
-    }
+public class NiceLimitConfiguration  {
 
     @Bean(name = "com.suchtool.nicelimit.niceLimitProperty")
     @ConfigurationProperties(prefix = "suchtool.nicelimit")
