@@ -93,9 +93,13 @@ public class NiceLimitFilter implements Filter, ApplicationListener<EnvironmentC
             HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
             String url = httpServletRequest.getRequestURI();
 
-            boolean limited = limitRequired(url);
+            boolean limitRequired = limitRequired(url);
 
-            if (limited) {
+            if (newProperty.getDebug()) {
+                log.info("nicelimit limit required: {}", limitRequired);
+            }
+
+            if (limitRequired) {
                 if (servletResponse instanceof HttpServletResponse) {
                     HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
                     httpServletResponse.setStatus(newProperty.getLimitedStatusCode());
@@ -115,20 +119,31 @@ public class NiceLimitFilter implements Filter, ApplicationListener<EnvironmentC
      * @return 是否要限流
      */
     private boolean limitRequired(String url) {
+        if (newProperty.getDebug()) {
+            log.info("nicelimit check limit required start");
+        }
+
         // 如果是禁止的URL，直接限流
         if (!CollectionUtils.isEmpty(newProperty.getForbidUrl())
             && newProperty.getForbidUrl().contains(url)) {
+            if (newProperty.getDebug()) {
+                log.info("nicelimit limit is required: url is in forbid url");
+            }
             return true;
         }
 
         // 如果没有限流配置，则不限流
         NiceLimitDetailProperty niceLimitDetailProperty = detailPropertyMap.get(url);
         if (niceLimitDetailProperty == null) {
+            if (newProperty.getDebug()) {
+                log.info("nicelimit limit is not required: url is not in detail");
+            }
             return false;
         }
 
         RRateLimiter rateLimiter = rateLimiterMap.get(url);
         if (rateLimiter == null) {
+            log.info("nicelimit rate limiter is null, recreate start");
             rateLimiter = doCreateRateLimiter(niceLimitDetailProperty);
         }
 
@@ -136,6 +151,7 @@ public class NiceLimitFilter implements Filter, ApplicationListener<EnvironmentC
             return rateLimiter.tryAcquire();
         } else {
             // 正常不会到这里，为了保险，在这里不限流
+            log.error("nicelimit rate limiter is null, even though recreate");
             return false;
         }
     }
