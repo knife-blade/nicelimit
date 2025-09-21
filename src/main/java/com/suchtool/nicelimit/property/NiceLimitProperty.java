@@ -24,14 +24,19 @@ public class NiceLimitProperty {
     private String version = "1";
 
     /**
+     * 被限流的状态码
+     */
+    private Integer limitedStatusCode = 429;
+
+    /**
+     * 被限流的内容类型
+     */
+    private String limitedContentType = "text/plain;charset=UTF-8";
+
+    /**
      * 被限流的提示信息
      */
     private String limitedMessage = "哎呀，访问量好大，请稍后再试试吧~";
-
-    /**
-     * 被限流的异常
-     */
-    private Class<? extends RuntimeException> limitedException;
 
     /**
      * 配置的key
@@ -49,11 +54,11 @@ public class NiceLimitProperty {
     private String limiterKeyPrefix = "niceLimit:limiter";
 
     /**
-     * 白名单
+     * 禁止访问的URL
      * 1.为了极致的效率，不支持通配符
      * 2.默认是LinkedHashSet，查询速度极高
      */
-    private Set<String> whiteUrl;
+    private Set<String> forbidUrl;
 
     /**
      * 详情
