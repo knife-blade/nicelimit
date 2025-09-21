@@ -142,32 +142,55 @@ public class NiceLimitFilter implements Filter, ApplicationListener<EnvironmentC
 
     private void checkAndUpdateConfig() {
         if (requireUpdateLocal()) {
+            if (newProperty.getDebug()) {
+                log.info("nicelimit update local start");
+            }
+            String newConfigJsonString = JsonUtil.toJsonString(newProperty);
+            // 更新本地配置
+            updateLocalConfig(newConfigJsonString);
+
+            boolean requireUpdateRemote = false;
+
             RBucket<String> configBucket = redissonClient.getBucket(newProperty.getConfigKey());
             String remotePropertyJson = configBucket.get();
+
+            if (newProperty.getDebug()) {
+                log.info("nicelimit fetch remote config result: {}", remotePropertyJson);
+            }
+
             NiceLimitProperty remoteProperty = null;
-            boolean requireUpdateRemote = false;
             if (!StringUtils.hasText(remotePropertyJson)) {
+                if (newProperty.getDebug()) {
+                    log.info("nicelimit remote config is blank, update remote is required");
+                }
                 requireUpdateRemote = true;
             } else {
                 remoteProperty = JsonUtil.toObject(remotePropertyJson, NiceLimitProperty.class);
                 requireUpdateRemote = !newProperty.getVersion().equals(remoteProperty.getVersion());
+                if (newProperty.getDebug()) {
+                    log.info("nicelimit remote config is different from new config, update remote is required");
+                }
             }
 
-            String newConfigJsonString = JsonUtil.toJsonString(newProperty);
-
-            // 更新本地配置
-            updateLocalConfig(newConfigJsonString);
+            if (newProperty.getDebug()) {
+                log.info("nicelimit requireUpdateRemote: {}", requireUpdateRemote);
+            }
 
             // 更新redis的配置
             if (requireUpdateRemote) {
                 RLock lock = redissonClient.getLock(newProperty.getUpdateLockKey());
-                boolean locked = false;
-                locked = lock.tryLock();
+                boolean locked = lock.tryLock();
                 if (locked) {
                     try {
                         deleteOldRateLimiter(remoteProperty);
                         createNewRateLimiter();
                         configBucket.set(newConfigJsonString);
+
+                        if (newProperty.getDebug()) {
+                            log.info("nicelimit update remote config as: {}", newProperty);
+                        }
+                    } catch (Exception e) {
+                        log.error("nicelimit update remote error", e);
                     } finally {
                         lock.unlock();
                     }
@@ -197,12 +220,22 @@ public class NiceLimitFilter implements Filter, ApplicationListener<EnvironmentC
     }
 
     private void deleteOldRateLimiter(NiceLimitProperty remoteProperty) {
+        if (newProperty.getDebug()) {
+            log.info("nicelimit delete old rate limiter start");
+        }
+
         if (remoteProperty == null) {
+            if (newProperty.getDebug()) {
+                log.info("nicelimit remote property is null, do not delete old rate limiter");
+            }
             return;
         }
 
         List<NiceLimitDetailProperty> detailList = remoteProperty.getDetail();
         if (CollectionUtils.isEmpty(detailList)) {
+            if (newProperty.getDebug()) {
+                log.info("nicelimit remote property is empty, do not delete old rate limiter");
+            }
             return;
         }
 
@@ -210,12 +243,24 @@ public class NiceLimitFilter implements Filter, ApplicationListener<EnvironmentC
             RRateLimiter rateLimiter = redissonClient.getRateLimiter(
                     buildRateLimiterKey(remoteProperty, detailProperty.getUrl()));
             rateLimiter.delete();
+            if (newProperty.getDebug()) {
+                log.info("nicelimit delete old rate limiter successfully, detail property: {}",
+                        JsonUtil.toJsonString(detailProperty)
+                        );
+            }
         }
     }
 
     private void createNewRateLimiter() {
+        if (newProperty.getDebug()) {
+            log.info("nicelimit create new rate limiter start");
+        }
+
         List<NiceLimitDetailProperty> detailList = newProperty.getDetail();
         if (CollectionUtils.isEmpty(detailList)) {
+            if (newProperty.getDebug()) {
+                log.info("nicelimit detail property is empty, do not create new rate limiter");
+            }
             return;
         }
 
@@ -223,6 +268,10 @@ public class NiceLimitFilter implements Filter, ApplicationListener<EnvironmentC
             RRateLimiter rRateLimiter = doCreateRateLimiter(detailProperty);
             if (rRateLimiter != null) {
                 rateLimiterMap.put(detailProperty.getUrl(), rRateLimiter);
+            }
+            if (newProperty.getDebug()) {
+                log.info("nicelimit create new rate limiter successfully, detail property: {}",
+                        JsonUtil.toJsonString(detailProperty));
             }
         }
     }
@@ -242,6 +291,7 @@ public class NiceLimitFilter implements Filter, ApplicationListener<EnvironmentC
         if (success) {
             return rateLimiter;
         } else {
+            log.error("nicelimit do create rate limiter error: success is false");
             return null;
         }
     }

@@ -73,6 +73,7 @@ suchtool:
 |-----------------------|------------------------------------------|----------------------------------|
 | suchtool.nicelimit.inject                | 是否注入（是否注入容器）            | true                             |
 | suchtool.nicelimit.enabled               | 是否启用（inject为true时，才有效）  | true                             |
+| suchtool.nicelimit.debug               | 是否启用调试模式          | false                                |
 | suchtool.nicelimit.version               | 版本，每次修改配置必须更改          | 1                                |
 | suchtool.nicelimit.limited-status-code   | 被限流的状态码                      | 429                              |
 | suchtool.nicelimit.limited-content-type  | 被限流的内容类型                    | text/plain;charset=UTF-8         |

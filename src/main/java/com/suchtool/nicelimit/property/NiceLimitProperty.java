@@ -19,6 +19,11 @@ public class NiceLimitProperty {
     private Boolean enabled = true;
 
     /**
+     * 是否启用调试模式
+     */
+    private Boolean debug = false;
+
+    /**
      * 版本，每次修改配置必须更改
      */
     private String version = "1";
