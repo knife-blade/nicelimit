@@ -186,7 +186,6 @@ public class NiceLimitHandler {
                 if (locked) {
                     try {
                         deleteOldRateLimiter(remoteProperty);
-                        createNewRateLimiter();
                         configBucket.set(newConfigJsonString);
 
                         if (newProperty.getDebug()) {
@@ -199,6 +198,8 @@ public class NiceLimitHandler {
                     }
                 }
             }
+
+            createAndRecordReadRateLimiter();
         }
     }
 
@@ -254,7 +255,7 @@ public class NiceLimitHandler {
         }
     }
 
-    private void createNewRateLimiter() {
+    private void createAndRecordReadRateLimiter() {
         if (newProperty.getDebug()) {
             log.info("nicelimit create new rate limiter start");
         }
@@ -284,7 +285,8 @@ public class NiceLimitHandler {
     private RRateLimiter doCreateRateLimiter(NiceLimitDetailProperty detailProperty) {
         RRateLimiter rateLimiter = redissonClient.getRateLimiter(
                 buildRateLimiterKey(newProperty, detailProperty.getUrl()));
-        boolean success = rateLimiter.trySetRate(
+        // 返回true表示新建，false表示已存在
+        boolean createNew = rateLimiter.trySetRate(
                 detailProperty.getRateType(),
                 detailProperty.getRate(),
                 detailProperty.getRateInterval().getSeconds(),
