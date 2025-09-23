@@ -107,7 +107,7 @@ public class NiceLimitHandler {
         if (!CollectionUtils.isEmpty(newProperty.getForbidUrl())
                 && newProperty.getForbidUrl().contains(url)) {
             if (newProperty.getDebug()) {
-                log.info("nicelimit limit is required: url is in forbid url");
+                log.info("nicelimit limit is required: url{} is in forbid url", url);
             }
             return true;
         }
@@ -118,7 +118,7 @@ public class NiceLimitHandler {
             niceLimitDetailProperty = detailPropertyMap.get(url);
             if (niceLimitDetailProperty == null) {
                 if (newProperty.getDebug()) {
-                    log.info("nicelimit limit is not required: url is not in detail");
+                    log.info("nicelimit limit is not required: url({} is not in detail", url);
                 }
                 return false;
             }
@@ -130,7 +130,7 @@ public class NiceLimitHandler {
 
         RRateLimiter rateLimiter = rateLimiterMap.get(url);
         if (rateLimiter == null) {
-            log.info("nicelimit rate limiter is null, recreate start");
+            log.info("nicelimit rate limiter is null, recreate start.url:{}", url);
             rateLimiter = doCreateRateLimiter(niceLimitDetailProperty);
         }
 
@@ -238,7 +238,7 @@ public class NiceLimitHandler {
         List<NiceLimitDetailProperty> detailList = remoteProperty.getDetail();
         if (CollectionUtils.isEmpty(detailList)) {
             if (newProperty.getDebug()) {
-                log.info("nicelimit remote property is empty, do not delete old rate limiter");
+                log.info("nicelimit remote property deteil is empty, do not delete old rate limiter");
             }
             return;
         }
@@ -267,6 +267,8 @@ public class NiceLimitHandler {
             }
             return;
         }
+
+        rateLimiterMap.clear();
 
         for (NiceLimitDetailProperty detailProperty : detailList) {
             doCreateRateLimiter(detailProperty);
