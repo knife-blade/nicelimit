@@ -24,11 +24,6 @@ public class NiceLimitProperty {
     private Boolean debug = false;
 
     /**
-     * 版本，每次修改配置必须更改
-     */
-    private String version = "1";
-
-    /**
      * 被限流的状态码
      */
     private Integer limitedStatusCode = 429;

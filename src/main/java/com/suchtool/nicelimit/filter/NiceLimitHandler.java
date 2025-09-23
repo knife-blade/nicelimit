@@ -6,6 +6,7 @@ import com.suchtool.nicetool.util.base.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.*;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.FilterChain;
@@ -169,7 +170,11 @@ public class NiceLimitHandler {
                 requireUpdateRemote = true;
             } else {
                 remoteProperty = JsonUtil.toObject(remotePropertyJson, NiceLimitProperty.class);
-                requireUpdateRemote = !newProperty.getVersion().equals(remoteProperty.getVersion());
+
+                String newPropertyJsonString = JsonUtil.toJsonString(newProperty);
+                String remotePropertyJsonString = JsonUtil.toJsonString(remoteProperty);
+                requireUpdateRemote = !DigestUtils.md5DigestAsHex(newPropertyJsonString.getBytes())
+                        .equals(DigestUtils.md5DigestAsHex(remotePropertyJsonString.getBytes()));
                 if (newProperty.getDebug()) {
                     log.info("nicelimit remote config is different from new config, update remote is required");
                 }
@@ -210,7 +215,11 @@ public class NiceLimitHandler {
         if (oldProperty == null) {
             return true;
         } else {
-            return !newProperty.getVersion().equals(oldProperty.getVersion());
+            String newPropertyJsonString = JsonUtil.toJsonString(newProperty);
+            String oldPropertyJsonString = JsonUtil.toJsonString(oldProperty);
+
+            return !DigestUtils.md5DigestAsHex(newPropertyJsonString.getBytes())
+                    .equals(DigestUtils.md5DigestAsHex(oldPropertyJsonString.getBytes()));
         }
     }
 
