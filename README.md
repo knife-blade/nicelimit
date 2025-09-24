@@ -73,17 +73,17 @@ suchtool:
 | suchtool.nicelimit.inject                | 是否注入（是否注入容器）            | true                             |
 | suchtool.nicelimit.enabled               | 是否启用（inject为true时，才有效）  | true                             |
 | suchtool.nicelimit.debug               | 是否启用调试模式          | false                                |
-| suchtool.nicelimit.limited-status-code   | 被限流的状态码                      | 429                              |
-| suchtool.nicelimit.limited-content-type  | 被限流的内容类型                    | text/plain;charset=UTF-8         |
+| suchtool.nicelimit.limited-status-code   | 被限流的状态码              | 429                              |
+| suchtool.nicelimit.limited-content-type  | 被限流的内容类型            | text/plain;charset=UTF-8         |
+| suchtool.nicelimit.limited-message       | 被限流的提示信息            | 哎呀，访问量好大，请稍后再试试吧~  |
 | suchtool.nicelimit.forbid-url       | 禁止访问的URL                    | null  |
-| suchtool.nicelimit.limited-message       | 被限流的提示信息                    | 哎呀，访问量好大，请稍后再试试吧~  |
-| suchtool.nicelimit.config-key            | 配置的key                           | niceLimit:config                 |
+| suchtool.nicelimit.config-key            | 配置的key                   | niceLimit:config                 |
 | suchtool.nicelimit.update-lock-key       | 更新时用的锁的key（异步加锁，不影响业务性能）| niceLimit:update-lock   |
-| suchtool.nicelimit.limiter-key-prefix    | 限流器的key前缀                     | niceLimit:limiter               |
-| suchtool.nicelimit.detail                | 详情（详细的限流配置）           | null                             |
-| suchtool.nicelimit.filter-pattern        | 过滤器匹配模式（支持通配符）     | ["/*"]                             |
-| suchtool.nicelimit.filter-name           | 过滤器名字                       | niceLimitFilter                  |
-| suchtool.nicelimit.filter-order          | 过滤器顺序                       | null                             |
+| suchtool.nicelimit.limiter-key-prefix    | 限流器的key前缀              | niceLimit:limiter               |
+| suchtool.nicelimit.detail                | 详情（详细的限流配置）       | null                             |
+| suchtool.nicelimit.filter-pattern        | 过滤器匹配模式（支持通配符） | ["/*"]                             |
+| suchtool.nicelimit.filter-name           | 过滤器名字                   | niceLimitFilter                  |
+| suchtool.nicelimit.filter-order          | 过滤器顺序                   | null                             |
 
 suchtool.nicelimit.detail配置：
 
@@ -93,3 +93,8 @@ suchtool.nicelimit.detail配置：
 | rate-type      | 速度类型：OVERALL（全实例），PER_CLIENT（单实例） | 略   |
 | rate-interval  | 速度间隔（单位时间）   | 10s |
 | rate           | 速度（数量）           | 5   |
+| limited-status-code   | 被限流的状态码      | null  |
+| limited-content-type  | 被限流的内容类型    | null  |
+| limited-message       | 被限流的提示信息    | null  |
+
+如果detail里的limited-status-code、limited-content-type、limited-message没配置，则取顶层（suchtool.nicelimit.xxx）的配置。

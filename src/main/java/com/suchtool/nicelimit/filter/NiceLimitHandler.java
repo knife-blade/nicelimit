@@ -81,14 +81,35 @@ public class NiceLimitHandler {
             }
 
             if (limitRequired) {
+
+                Integer limitedStatusCode = newProperty.getLimitedStatusCode();
+                String limitedContentType = newProperty.getLimitedContentType();
+                String limitedMessage = newProperty.getLimitedMessage();
+
+                NiceLimitDetailProperty detailProperty = detailPropertyMap.get(url);
+                if (detailProperty != null) {
+                    if (detailProperty.getLimitedStatusCode() != null) {
+                        limitedStatusCode = detailProperty.getLimitedStatusCode();
+                    }
+
+                    if (StringUtils.hasText(detailProperty.getLimitedContentType())) {
+                        limitedContentType = detailProperty.getLimitedContentType();
+                    }
+
+                    if (StringUtils.hasText(detailProperty.getLimitedMessage())) {
+                        limitedMessage = detailProperty.getLimitedMessage();
+                    }
+                }
+
                 if (servletResponse instanceof HttpServletResponse) {
                     HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
-                    httpServletResponse.setStatus(newProperty.getLimitedStatusCode());
-                    httpServletResponse.setContentType(newProperty.getLimitedContentType());
-                    httpServletResponse.getWriter().write(newProperty.getLimitedMessage());
+                    httpServletResponse.setStatus(limitedStatusCode);
+                    httpServletResponse.setContentType(limitedContentType);
+                    httpServletResponse.getWriter().write(limitedMessage);
+
                     return true;
                 } else {
-                    throw new RuntimeException(newProperty.getLimitedMessage());
+                    throw new RuntimeException(limitedMessage);
                 }
             }
         }
