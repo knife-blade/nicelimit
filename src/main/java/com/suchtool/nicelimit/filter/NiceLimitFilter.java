@@ -31,7 +31,11 @@ public class NiceLimitFilter implements Filter {
                          FilterChain filterChain) throws ServletException, IOException {
         try {
             if (Boolean.TRUE.equals(niceLimitProperty.getEnabled())) {
-                process(servletRequest, servletResponse, filterChain);
+                boolean limited = process(servletRequest, servletResponse, filterChain);
+                // 如果被限流，直接返回。（process里已经处理了响应）
+                if (limited) {
+                    return;
+                }
             }
         } catch (Exception e) {
             log.error("nicelimit filter error", e);
@@ -41,7 +45,7 @@ public class NiceLimitFilter implements Filter {
         filterChain.doFilter(servletRequest, servletResponse);
     }
 
-    private void process(ServletRequest servletRequest,
+    private boolean process(ServletRequest servletRequest,
                          ServletResponse servletResponse,
                          FilterChain filterChain) throws IOException {
         if (servletRequest instanceof HttpServletRequest) {
@@ -56,10 +60,14 @@ public class NiceLimitFilter implements Filter {
                     httpServletResponse.setStatus(niceLimitLimitedDTO.getLimitedStatusCode());
                     httpServletResponse.setContentType(niceLimitLimitedDTO.getLimitedContentType());
                     httpServletResponse.getWriter().write(niceLimitLimitedDTO.getLimitedMessage());
+
+                    return true;
                 } else {
                     throw new RuntimeException(niceLimitLimitedDTO.getLimitedMessage());
                 }
             }
         }
+
+        return false;
     }
 }
