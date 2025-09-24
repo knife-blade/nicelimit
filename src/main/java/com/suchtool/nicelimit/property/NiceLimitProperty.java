@@ -1,5 +1,6 @@
 package com.suchtool.nicelimit.property;
 
+import com.suchtool.nicelimit.constant.NiceLimitType;
 import lombok.Data;
 
 import java.util.Collections;
@@ -17,6 +18,11 @@ public class NiceLimitProperty {
      * 是否启用（inject为true时，此配置才有效）
      */
     private Boolean enabled = true;
+
+    /**
+     * 类型
+     */
+    private NiceLimitType type = NiceLimitType.SERVLET;
 
     /**
      * 是否启用调试模式
@@ -66,18 +72,8 @@ public class NiceLimitProperty {
     private List<NiceLimitDetailProperty> detail;
 
     /**
-     * 过滤器匹配模式（支持通配符，比如：/*）
+     * 过滤器配置
      */
-    private List<String> filterPattern = Collections.singletonList("/*");
-
-    /**
-     * 过滤器名字
-     */
-    private String filterName = "niceLimitFilter";
-
-    /**
-     * 过滤器顺序
-     */
-    private Integer filterOrder;
+    private NiceLimitFilterProperty filter;
 
 }

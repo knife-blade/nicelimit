@@ -1,5 +1,6 @@
-package com.suchtool.nicelimit.filter;
+package com.suchtool.nicelimit.handler;
 
+import com.suchtool.nicelimit.dto.NiceLimitLimitedDTO;
 import com.suchtool.nicelimit.property.NiceLimitDetailProperty;
 import com.suchtool.nicelimit.property.NiceLimitProperty;
 import com.suchtool.nicetool.util.base.JsonUtil;
@@ -10,7 +11,6 @@ import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -46,75 +46,57 @@ public class NiceLimitHandler {
         this.redissonClient = redissonClient;
     }
 
-    public void doFilter(ServletRequest servletRequest,
-                         ServletResponse servletResponse,
-                         FilterChain filterChain) throws ServletException, IOException {
+    public NiceLimitLimitedDTO checkRateLimit(String url) {
         if (Boolean.TRUE.equals(newProperty.getEnabled())) {
             try {
-                boolean limitRequired = processDoFilter(servletRequest, servletResponse, filterChain);
-                if (limitRequired) {
-                    return;
-                }
+                return doCheckRateLimit(url);
             } catch (Exception e) {
                 log.error("nicelimit error", e);
             }
-
-            // 调用filter链中的下一个filter
-            filterChain.doFilter(servletRequest, servletResponse);
         }
+
+        return null;
     }
 
     /**
      * @return 是否限流
      */
-    private boolean processDoFilter(ServletRequest servletRequest,
-                                    ServletResponse servletResponse,
-                                    FilterChain filterChain) throws IOException {
-        if (servletRequest instanceof HttpServletRequest) {
-            HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
-            String url = httpServletRequest.getRequestURI();
+    private NiceLimitLimitedDTO doCheckRateLimit(String url) {
+        boolean limitRequired = limitRequired(url);
 
-            boolean limitRequired = limitRequired(url);
+        if (newProperty.getDebug()) {
+            log.info("nicelimit limit required: {}. url: {}", limitRequired, url);
+        }
 
-            if (newProperty.getDebug()) {
-                log.info("nicelimit limit required: {}", limitRequired);
-            }
+        if (limitRequired) {
+            Integer limitedStatusCode = newProperty.getLimitedStatusCode();
+            String limitedContentType = newProperty.getLimitedContentType();
+            String limitedMessage = newProperty.getLimitedMessage();
 
-            if (limitRequired) {
-
-                Integer limitedStatusCode = newProperty.getLimitedStatusCode();
-                String limitedContentType = newProperty.getLimitedContentType();
-                String limitedMessage = newProperty.getLimitedMessage();
-
-                NiceLimitDetailProperty detailProperty = detailPropertyMap.get(url);
-                if (detailProperty != null) {
-                    if (detailProperty.getLimitedStatusCode() != null) {
-                        limitedStatusCode = detailProperty.getLimitedStatusCode();
-                    }
-
-                    if (StringUtils.hasText(detailProperty.getLimitedContentType())) {
-                        limitedContentType = detailProperty.getLimitedContentType();
-                    }
-
-                    if (StringUtils.hasText(detailProperty.getLimitedMessage())) {
-                        limitedMessage = detailProperty.getLimitedMessage();
-                    }
+            NiceLimitDetailProperty detailProperty = detailPropertyMap.get(url);
+            if (detailProperty != null) {
+                if (detailProperty.getLimitedStatusCode() != null) {
+                    limitedStatusCode = detailProperty.getLimitedStatusCode();
                 }
 
-                if (servletResponse instanceof HttpServletResponse) {
-                    HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
-                    httpServletResponse.setStatus(limitedStatusCode);
-                    httpServletResponse.setContentType(limitedContentType);
-                    httpServletResponse.getWriter().write(limitedMessage);
-
-                    return true;
-                } else {
-                    throw new RuntimeException(limitedMessage);
+                if (StringUtils.hasText(detailProperty.getLimitedContentType())) {
+                    limitedContentType = detailProperty.getLimitedContentType();
                 }
+
+                if (StringUtils.hasText(detailProperty.getLimitedMessage())) {
+                    limitedMessage = detailProperty.getLimitedMessage();
+                }
+
+                NiceLimitLimitedDTO niceLimitLimitedDTO = new NiceLimitLimitedDTO();
+                niceLimitLimitedDTO.setLimitedStatusCode(limitedStatusCode);
+                niceLimitLimitedDTO.setLimitedContentType(limitedContentType);
+                niceLimitLimitedDTO.setLimitedMessage(limitedMessage);
+
+                return niceLimitLimitedDTO;
             }
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -323,7 +305,7 @@ public class NiceLimitHandler {
                 detailProperty.getRate(),
                 detailProperty.getRateInterval().getSeconds(),
                 RateIntervalUnit.SECONDS
-                );
+        );
         rateLimiterMap.put(detailProperty.getUrl(), rateLimiter);
         return rateLimiter;
     }

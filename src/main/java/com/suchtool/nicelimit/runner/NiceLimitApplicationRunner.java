@@ -1,5 +1,6 @@
-package com.suchtool.nicelimit.filter;
+package com.suchtool.nicelimit.runner;
 
+import com.suchtool.nicelimit.handler.NiceLimitHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
