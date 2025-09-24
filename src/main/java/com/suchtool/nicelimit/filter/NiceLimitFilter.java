@@ -2,10 +2,8 @@ package com.suchtool.nicelimit.filter;
 
 import com.suchtool.nicelimit.dto.NiceLimitLimitedDTO;
 import com.suchtool.nicelimit.handler.NiceLimitHandler;
-import com.suchtool.nicelimit.property.NiceLimitDetailProperty;
 import com.suchtool.nicelimit.property.NiceLimitProperty;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
