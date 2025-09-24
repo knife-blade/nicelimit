@@ -1,29 +1,65 @@
 package com.suchtool.nicelimit.filter;
 
+import com.suchtool.nicelimit.dto.NiceLimitLimitedDTO;
+import com.suchtool.nicelimit.handler.NiceLimitHandler;
+import com.suchtool.nicelimit.property.NiceLimitDetailProperty;
+import com.suchtool.nicelimit.property.NiceLimitProperty;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 @Slf4j
 public class NiceLimitFilter implements Filter {
 
     private final NiceLimitHandler niceLimitHandler;
 
-    public NiceLimitFilter(NiceLimitHandler niceLimitHandler) {
+    private final NiceLimitProperty niceLimitProperty;
+
+    public NiceLimitFilter(NiceLimitHandler niceLimitHandler,
+                           NiceLimitProperty niceLimitProperty) {
         this.niceLimitHandler = niceLimitHandler;
+        this.niceLimitProperty = niceLimitProperty;
     }
 
     @Override
     public void doFilter(ServletRequest servletRequest,
                          ServletResponse servletResponse,
-                         FilterChain filterChain) {
+                         FilterChain filterChain) throws ServletException, IOException {
         try {
-            niceLimitHandler.doFilter(servletRequest, servletResponse, filterChain);
+            if (Boolean.TRUE.equals(niceLimitProperty.getEnabled())) {
+                process(servletRequest, servletResponse, filterChain);
+            }
         } catch (Exception e) {
             log.error("nicelimit filter error", e);
+        }
+
+        // 调用filter链中的下一个filter
+        filterChain.doFilter(servletRequest, servletResponse);
+    }
+
+    private void process(ServletRequest servletRequest,
+                         ServletResponse servletResponse,
+                         FilterChain filterChain) throws IOException {
+        if (servletRequest instanceof HttpServletRequest) {
+            HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
+            String url = httpServletRequest.getRequestURI();
+
+            NiceLimitLimitedDTO niceLimitLimitedDTO = niceLimitHandler.checkRateLimit(url);
+
+            if (niceLimitLimitedDTO != null) {
+                if (servletResponse instanceof HttpServletResponse) {
+                    HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
+                    httpServletResponse.setStatus(niceLimitLimitedDTO.getLimitedStatusCode());
+                    httpServletResponse.setContentType(niceLimitLimitedDTO.getLimitedContentType());
+                    httpServletResponse.getWriter().write(niceLimitLimitedDTO.getLimitedMessage());
+                } else {
+                    throw new RuntimeException(niceLimitLimitedDTO.getLimitedMessage());
+                }
+            }
         }
     }
 }

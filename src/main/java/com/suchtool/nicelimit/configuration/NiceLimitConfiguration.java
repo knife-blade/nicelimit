@@ -1,10 +1,11 @@
 package com.suchtool.nicelimit.configuration;
 
 
-import com.suchtool.nicelimit.filter.NiceLimitApplicationRunner;
-import com.suchtool.nicelimit.filter.NiceLimitEnvironmentChangeEventListener;
+import com.suchtool.nicelimit.property.NiceLimitFilterProperty;
+import com.suchtool.nicelimit.runner.NiceLimitApplicationRunner;
+import com.suchtool.nicelimit.listener.NiceLimitEnvironmentChangeEventListener;
 import com.suchtool.nicelimit.filter.NiceLimitFilter;
-import com.suchtool.nicelimit.filter.NiceLimitHandler;
+import com.suchtool.nicelimit.handler.NiceLimitHandler;
 import com.suchtool.nicelimit.property.NiceLimitProperty;
 import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -45,20 +46,26 @@ public class NiceLimitConfiguration {
     }
 
     @Bean(name = "com.suchtool.nicelimit.niceLimitFilterRegistration")
+    @ConditionalOnProperty(name = "suchtool.nicelimit.type", havingValue = "SERVLET")
     public FilterRegistrationBean<?> filterRegistrationBean(NiceLimitHandler niceLimitHandler,
                                                             NiceLimitProperty niceLimitProperty) {
         FilterRegistrationBean<?> filterRegistrationBean = new FilterRegistrationBean<>(
-                new NiceLimitFilter(niceLimitHandler));
-        List<String> filterPatternList = niceLimitProperty.getFilterPattern();
+                new NiceLimitFilter(niceLimitHandler, niceLimitProperty));
+        NiceLimitFilterProperty filter = niceLimitProperty.getFilter();
+        if (filter == null) {
+            filter = new NiceLimitFilterProperty();
+        }
+
+        List<String> filterPatternList = filter.getFilterPattern();
         if (!CollectionUtils.isEmpty(filterPatternList)) {
             for (String pattern : filterPatternList) {
                 filterRegistrationBean.addUrlPatterns(pattern);
             }
         }
-        filterRegistrationBean.setName(niceLimitProperty.getFilterName());
-        if (niceLimitProperty.getFilterOrder() != null) {
+        filterRegistrationBean.setName(filter.getFilterName());
+        if (filter.getFilterOrder() != null) {
             // 过滤器执行顺序（决定doFilter顺序，不决定init和destroy顺序）
-            filterRegistrationBean.setOrder(niceLimitProperty.getFilterOrder());
+            filterRegistrationBean.setOrder(filter.getFilterOrder());
         }
 
         return filterRegistrationBean;
