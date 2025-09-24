@@ -10,12 +10,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -207,7 +201,7 @@ public class NiceLimitHandler {
                 }
             }
 
-            createAndRecordReadRateLimiter();
+            createAndRecordRateLimiter();
         }
     }
 
@@ -267,7 +261,7 @@ public class NiceLimitHandler {
         }
     }
 
-    private void createAndRecordReadRateLimiter() {
+    private void createAndRecordRateLimiter() {
         if (newProperty.getDebug()) {
             log.info("nicelimit create new rate limiter start");
         }

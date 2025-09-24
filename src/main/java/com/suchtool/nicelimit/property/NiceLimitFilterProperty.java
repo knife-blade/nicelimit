@@ -1,9 +1,7 @@
 package com.suchtool.nicelimit.property;
 
 import lombok.Data;
-import org.redisson.api.RateType;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
