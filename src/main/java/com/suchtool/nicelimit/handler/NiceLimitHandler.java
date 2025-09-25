@@ -45,7 +45,7 @@ public class NiceLimitHandler {
             try {
                 return doCheckRateLimit(url);
             } catch (Exception e) {
-                log.error("nicelimit error", e);
+                log.error("nicelimit checkRateLimit error", e);
             }
         }
 
@@ -98,7 +98,7 @@ public class NiceLimitHandler {
      */
     private boolean limitRequired(String url) {
         if (newProperty.getDebug()) {
-            log.info("nicelimit check limit required start");
+            log.info("nicelimit check limitRequired start");
         }
 
         // 如果是禁止的URL，直接限流
@@ -116,7 +116,7 @@ public class NiceLimitHandler {
             niceLimitDetailProperty = detailPropertyMap.get(url);
             if (niceLimitDetailProperty == null) {
                 if (newProperty.getDebug()) {
-                    log.info("nicelimit limit is not required: url({} is not in detail", url);
+                    log.info("nicelimit limit is not required: url({} is not in detail)", url);
                 }
                 return false;
             }
@@ -128,7 +128,7 @@ public class NiceLimitHandler {
 
         RRateLimiter rateLimiter = rateLimiterMap.get(url);
         if (rateLimiter == null) {
-            log.info("nicelimit rate limiter is null, recreate start.url:{}", url);
+            log.info("nicelimit rate limiter is null, recreate start. url:{}", url);
             rateLimiter = doCreateRateLimiter(niceLimitDetailProperty);
         }
 
@@ -136,7 +136,7 @@ public class NiceLimitHandler {
             return !rateLimiter.tryAcquire();
         } else {
             // 正常不会到这里，为了保险，在这里不限流
-            log.error("nicelimit rate limiter is null, even though recreate");
+            log.error("nicelimit rateLimiter is null, even though recreate. url:{}", url);
             return false;
         }
     }
@@ -236,7 +236,7 @@ public class NiceLimitHandler {
 
         if (remoteProperty == null) {
             if (newProperty.getDebug()) {
-                log.info("nicelimit remote property is null, do not delete old rate limiter");
+                log.info("nicelimit don't delete old rate limiter(remote property is null,)");
             }
             return;
         }
@@ -244,7 +244,7 @@ public class NiceLimitHandler {
         List<NiceLimitDetailProperty> detailList = remoteProperty.getDetail();
         if (CollectionUtils.isEmpty(detailList)) {
             if (newProperty.getDebug()) {
-                log.info("nicelimit remote property deteil is empty, do not delete old rate limiter");
+                log.info("nicelimit don't delete old rate limiter(remote property detail is empty)");
             }
             return;
         }
@@ -269,7 +269,7 @@ public class NiceLimitHandler {
         List<NiceLimitDetailProperty> detailList = newProperty.getDetail();
         if (CollectionUtils.isEmpty(detailList)) {
             if (newProperty.getDebug()) {
-                log.info("nicelimit detail property is empty, do not create new rate limiter");
+                log.info("nicelimit don't create new rate limiter(detail property is empty)");
             }
             return;
         }
@@ -278,10 +278,6 @@ public class NiceLimitHandler {
 
         for (NiceLimitDetailProperty detailProperty : detailList) {
             doCreateRateLimiter(detailProperty);
-            if (newProperty.getDebug()) {
-                log.info("nicelimit create new rate limiter successfully, detail property: {}",
-                        JsonUtil.toJsonString(detailProperty));
-            }
         }
     }
 
@@ -301,6 +297,12 @@ public class NiceLimitHandler {
                 RateIntervalUnit.SECONDS
         );
         rateLimiterMap.put(detailProperty.getUrl(), rateLimiter);
+
+        if (newProperty.getDebug()) {
+            log.info("nicelimit create new rate limiter successfully, detail property: {}",
+                    JsonUtil.toJsonString(detailProperty));
+        }
+
         return rateLimiter;
     }
 }

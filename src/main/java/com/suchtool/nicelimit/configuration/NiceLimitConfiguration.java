@@ -50,7 +50,7 @@ public class NiceLimitConfiguration {
     public FilterRegistrationBean<?> filterRegistrationBean(NiceLimitHandler niceLimitHandler,
                                                             NiceLimitProperty niceLimitProperty) {
         FilterRegistrationBean<?> filterRegistrationBean = new FilterRegistrationBean<>(
-                new NiceLimitFilter(niceLimitHandler, niceLimitProperty));
+                new NiceLimitFilter(niceLimitHandler));
         NiceLimitFilterProperty filter = niceLimitProperty.getFilter();
         if (filter == null) {
             filter = new NiceLimitFilterProperty();
