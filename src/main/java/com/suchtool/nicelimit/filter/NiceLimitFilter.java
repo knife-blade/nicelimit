@@ -15,12 +15,8 @@ public class NiceLimitFilter implements Filter {
 
     private final NiceLimitHandler niceLimitHandler;
 
-    private final NiceLimitProperty niceLimitProperty;
-
-    public NiceLimitFilter(NiceLimitHandler niceLimitHandler,
-                           NiceLimitProperty niceLimitProperty) {
+    public NiceLimitFilter(NiceLimitHandler niceLimitHandler) {
         this.niceLimitHandler = niceLimitHandler;
-        this.niceLimitProperty = niceLimitProperty;
     }
 
     @Override
@@ -28,12 +24,10 @@ public class NiceLimitFilter implements Filter {
                          ServletResponse servletResponse,
                          FilterChain filterChain) throws ServletException, IOException {
         try {
-            if (Boolean.TRUE.equals(niceLimitProperty.getEnabled())) {
-                boolean limited = process(servletRequest, servletResponse, filterChain);
-                // 如果被限流，直接返回。（process里已经处理了响应）
-                if (limited) {
-                    return;
-                }
+            boolean limited = process(servletRequest, servletResponse, filterChain);
+            // 如果被限流，直接返回。（process里已经处理了响应）
+            if (limited) {
+                return;
             }
         } catch (Exception e) {
             log.error("nicelimit filter error", e);
@@ -44,8 +38,8 @@ public class NiceLimitFilter implements Filter {
     }
 
     private boolean process(ServletRequest servletRequest,
-                         ServletResponse servletResponse,
-                         FilterChain filterChain) throws IOException {
+                            ServletResponse servletResponse,
+                            FilterChain filterChain) throws IOException {
         if (servletRequest instanceof HttpServletRequest) {
             HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
             String url = httpServletRequest.getRequestURI();

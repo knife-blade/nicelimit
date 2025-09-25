@@ -15,7 +15,7 @@ public class NiceLimitApplicationRunner implements ApplicationRunner {
     }
 
     @Override
-    public void run(ApplicationArguments args) throws Exception {
+    public void run(ApplicationArguments args) {
         try {
             niceLimitHandler.doCheckAndUpdateConfig();
         } catch (Exception e) {
