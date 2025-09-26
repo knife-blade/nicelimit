@@ -22,7 +22,7 @@ public class NiceLimitProperty {
     /**
      * 类型
      */
-    private NiceLimitType type = NiceLimitType.SERVLET;
+    private NiceLimitType type;
 
     /**
      * 是否启用调试模式
