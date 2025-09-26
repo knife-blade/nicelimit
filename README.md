@@ -98,9 +98,9 @@ suchtool:
 | suchtool.nicelimit.config-key            | 配置的key                   | niceLimit:config                 |
 | suchtool.nicelimit.update-lock-key       | 更新时用的锁的key（异步加锁，不影响业务性能）| niceLimit:update-lock   |
 | suchtool.nicelimit.limiter-key-prefix    | 限流器的key前缀              | niceLimit:limiter               |
-| suchtool.nicelimit.filter                | 过滤器配置       | null |
 | suchtool.nicelimit.forbid       | 禁止访问                    | null  |
 | suchtool.nicelimit.rate-limiter       | 限流  | null  |
+| suchtool.nicelimit.filter                | 过滤器配置       | null |
 
 #### 4.2 禁止访问
 
@@ -109,9 +109,9 @@ suchtool.nicelimit.forbid配置：
 | 配置           | 描述                  | 举例       |
 |----------------|---------------------|------------|
 | url            | URL（不支持通配符，为了极致的效率） | /aa/bb |
-| limited-status-code   | 被禁止的状态码             | null  |
-| limited-content-type  | 被禁止的内容类型            | null  |
-| limited-message       | 被禁止的提示信息            | null  |
+| limited-status-code   | 被禁止时的状态码             | null  |
+| limited-content-type  | 被禁止时的内容类型            | null  |
+| limited-message       | 被禁止时的提示信息            | null  |
 
 如果forbid里的limited-status-code、limited-content-type、limited-message没配置，则取顶层（suchtool.nicelimit.xxx）的配置。
 
@@ -125,9 +125,9 @@ suchtool.nicelimit.rate-limiter配置：
 | rate-type      | 速度类型：OVERALL（全实例），PER_CLIENT（单实例） | 略   |
 | rate-interval  | 速度间隔（单位时间）   | 10s |
 | rate           | 速度（数量）           | 5   |
-| limited-status-code   | 被禁止的状态码      | null  |
-| limited-content-type  | 被禁止的内容类型    | null  |
-| limited-message       | 被禁止的提示信息    | null  |
+| limited-status-code   | 被禁止时的状态码      | null  |
+| limited-content-type  | 被禁止时的内容类型    | null  |
+| limited-message       | 被禁止时的提示信息    | null  |
 
 如果rate-limiter里的limited-status-code、limited-content-type、limited-message没配置，则取顶层（suchtool.nicelimit.xxx）的配置。
 
