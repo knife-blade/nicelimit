@@ -41,12 +41,23 @@ public class NiceLimitHandler {
     }
 
     public NiceLimitLimitedDTO checkRateLimit(String url) {
-        if (Boolean.TRUE.equals(newProperty.getEnabled())) {
-            try {
-                return doCheckRateLimit(url);
-            } catch (Exception e) {
-                log.error("nicelimit checkRateLimit error", e);
+        if (newProperty.getDebug()) {
+            log.info("nicelimit checkRateLimiter. url:{}", url);
+        }
+
+        if (newProperty.getEnabled() == null
+                || !newProperty.getEnabled()) {
+            if (newProperty.getDebug()) {
+                log.info("nicelimit is not enabled, don't check rate limiter. url:{}", url);
             }
+
+            return null;
+        }
+
+        try {
+            return doCheckRateLimit(url);
+        } catch (Exception e) {
+            log.error("nicelimit checkRateLimit error", e);
         }
 
         return null;
@@ -59,7 +70,7 @@ public class NiceLimitHandler {
         boolean limitRequired = limitRequired(url);
 
         if (newProperty.getDebug()) {
-            log.info("nicelimit limit required: {}. url: {}", limitRequired, url);
+            log.info("nicelimit limit required: {}, url: {}", limitRequired, url);
         }
 
         if (limitRequired) {
@@ -169,12 +180,8 @@ public class NiceLimitHandler {
                 remoteProperty = JsonUtil.toObject(remotePropertyJson, NiceLimitProperty.class);
 
                 String newPropertyJsonString = JsonUtil.toJsonString(newProperty);
-                String remotePropertyJsonString = JsonUtil.toJsonString(remoteProperty);
                 requireUpdateRemote = !DigestUtils.md5DigestAsHex(newPropertyJsonString.getBytes())
-                        .equals(DigestUtils.md5DigestAsHex(remotePropertyJsonString.getBytes()));
-                if (newProperty.getDebug()) {
-                    log.info("nicelimit remote config is different from new config, update remote is required");
-                }
+                        .equals(DigestUtils.md5DigestAsHex(remotePropertyJson.getBytes()));
             }
 
             if (newProperty.getDebug()) {
@@ -266,6 +273,8 @@ public class NiceLimitHandler {
             log.info("nicelimit create new rate limiter start");
         }
 
+        rateLimiterMap.clear();
+
         List<NiceLimitDetailProperty> detailList = newProperty.getDetail();
         if (CollectionUtils.isEmpty(detailList)) {
             if (newProperty.getDebug()) {
@@ -273,8 +282,6 @@ public class NiceLimitHandler {
             }
             return;
         }
-
-        rateLimiterMap.clear();
 
         for (NiceLimitDetailProperty detailProperty : detailList) {
             doCreateRateLimiter(detailProperty);
