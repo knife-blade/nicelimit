@@ -48,6 +48,11 @@ suchtool:
   nicelimit:
     inject: true
     enabled: true
+    # 此项必须指定
+    type: SERVLET
+    limited-status-code: 429
+    limited-content-type: "text/plain;charset=UTF-8"
+    limited-message: '哎呀，访问量好大，请稍后再试试吧~'
     forbid-url:
       - /aa/dd
       - /aa/ee
@@ -57,11 +62,15 @@ suchtool:
         rate-type: OVERALL
         rate-interval: 10s
         rate: 5
+        limited-status-code: 200
+        limited-content-type: "application/json"
+        limited-message: '{"code":1,"msg":"哎呀，访问量好大，请稍后再试试吧~","data":null}'
       -
         url: /aa/cc
         rate-type: OVERALL
         rate-interval: 5s
         rate: 10
+
 ```
 
 ### 4.配置大全
@@ -73,6 +82,7 @@ suchtool:
 | suchtool.nicelimit.inject                | 是否注入（是否注入容器）            | true      |
 | suchtool.nicelimit.enabled               | 是否启用（inject为true时，才有效）  | true      |
 | suchtool.nicelimit.debug               | 是否启用调试模式          | false               |
+| suchtool.nicelimit.type               | 类型。必须指定。目前只支持SERVLET，后续会支持gateway等  | null  |
 | suchtool.nicelimit.limited-status-code   | 被限流的状态码              | 429             |
 | suchtool.nicelimit.limited-content-type  | 被限流的内容类型            | text/plain;charset=UTF-8         |
 | suchtool.nicelimit.limited-message       | 被限流的提示信息            | 哎呀，访问量好大，请稍后再试试吧~  |
@@ -102,3 +112,10 @@ suchtool.nicelimit.detail配置：
 | limited-message       | 被限流的提示信息    | null  |
 
 如果detail里的limited-status-code、limited-content-type、limited-message没配置，则取顶层（suchtool.nicelimit.xxx）的配置。
+
+## 5.原理
+
+禁止访问：suchtool.nicelimit.forbid-url直接会报错。报错信息是suchtool.nicelimit.limitedxxx
+限流：使用Redisson的RRateLimiter进行限流。
+
+SERVLET类型：注入一个Filter，
