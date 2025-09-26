@@ -109,7 +109,7 @@ public class NiceLimitHandler {
      */
     private boolean limitRequired(String url) {
         if (newProperty.getDebug()) {
-            log.info("nicelimit check limitRequired start");
+            log.info("nicelimit judge limitRequired start. url:{}", url);
         }
 
         // 如果是禁止的URL，直接限流
@@ -274,6 +274,9 @@ public class NiceLimitHandler {
         }
 
         rateLimiterMap.clear();
+        if (newProperty.getDebug()) {
+            log.info("nicelimit clear old rateLimiterMap");
+        }
 
         List<NiceLimitDetailProperty> detailList = newProperty.getDetail();
         if (CollectionUtils.isEmpty(detailList)) {
