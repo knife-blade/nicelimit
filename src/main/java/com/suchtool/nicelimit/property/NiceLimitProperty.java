@@ -2,13 +2,12 @@ package com.suchtool.nicelimit.property;
 
 import com.suchtool.nicelimit.constant.NiceLimitType;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 @Data
-public class NiceLimitProperty {
+public class NiceLimitProperty{
     /**
      * 是否注入（是否注入容器）
      */
@@ -60,16 +59,14 @@ public class NiceLimitProperty {
     private String limiterKeyPrefix = "niceLimit:limiter";
 
     /**
-     * 禁止访问的URL
-     * 1.为了极致的效率，不支持通配符
-     * 2.默认是LinkedHashSet，查询速度极高
+     * 禁止访问
      */
-    private Set<String> forbidUrl;
+    private List<NiceLimitForbidProperty> forbid;
 
     /**
-     * 详情
+     * 限流
      */
-    private List<NiceLimitDetailProperty> detail;
+    private List<NiceLimitRateLimiterProperty> rateLimiter;
 
     /**
      * 过滤器配置

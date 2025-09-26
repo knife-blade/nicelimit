@@ -1,8 +1,10 @@
 package com.suchtool.nicelimit.handler;
 
 import com.suchtool.nicelimit.dto.NiceLimitLimitedDTO;
-import com.suchtool.nicelimit.property.NiceLimitDetailProperty;
+import com.suchtool.nicelimit.property.NiceLimitForbidProperty;
+import com.suchtool.nicelimit.property.NiceLimitRateLimiterProperty;
 import com.suchtool.nicelimit.property.NiceLimitProperty;
+import com.suchtool.nicelimit.property.NiceLimitResponseCommonProperty;
 import com.suchtool.nicetool.util.base.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.*;
@@ -25,9 +27,14 @@ public class NiceLimitHandler {
     private final RedissonClient redissonClient;
 
     /**
-     * key：url，value：NiceLimitDetailProperty
+     * key：url
      */
-    private Map<String, NiceLimitDetailProperty> detailPropertyMap;
+    private Map<String, NiceLimitForbidProperty> forbidPropertyMap;
+
+    /**
+     * key：url
+     */
+    private Map<String, NiceLimitRateLimiterProperty> rateLimiterPropertyMap;
 
     /**
      * key：url，value：RRateLimiter
@@ -38,118 +45,6 @@ public class NiceLimitHandler {
                             RedissonClient redissonClient) {
         this.newProperty = newProperty;
         this.redissonClient = redissonClient;
-    }
-
-    public NiceLimitLimitedDTO checkRateLimit(String url) {
-        if (newProperty.getDebug()) {
-            log.info("nicelimit checkRateLimiter. url:{}", url);
-        }
-
-        if (newProperty.getEnabled() == null
-                || !newProperty.getEnabled()) {
-            if (newProperty.getDebug()) {
-                log.info("nicelimit is not enabled, don't check rate limiter. url:{}", url);
-            }
-
-            return null;
-        }
-
-        try {
-            return doCheckRateLimit(url);
-        } catch (Exception e) {
-            log.error("nicelimit checkRateLimit error", e);
-        }
-
-        return null;
-    }
-
-    /**
-     * @return 是否限流
-     */
-    private NiceLimitLimitedDTO doCheckRateLimit(String url) {
-        boolean limitRequired = limitRequired(url);
-
-        if (newProperty.getDebug()) {
-            log.info("nicelimit limit required: {}, url: {}", limitRequired, url);
-        }
-
-        if (limitRequired) {
-            Integer limitedStatusCode = newProperty.getLimitedStatusCode();
-            String limitedContentType = newProperty.getLimitedContentType();
-            String limitedMessage = newProperty.getLimitedMessage();
-
-            NiceLimitDetailProperty detailProperty = detailPropertyMap.get(url);
-            if (detailProperty != null) {
-                if (detailProperty.getLimitedStatusCode() != null) {
-                    limitedStatusCode = detailProperty.getLimitedStatusCode();
-                }
-
-                if (StringUtils.hasText(detailProperty.getLimitedContentType())) {
-                    limitedContentType = detailProperty.getLimitedContentType();
-                }
-
-                if (StringUtils.hasText(detailProperty.getLimitedMessage())) {
-                    limitedMessage = detailProperty.getLimitedMessage();
-                }
-
-                NiceLimitLimitedDTO niceLimitLimitedDTO = new NiceLimitLimitedDTO();
-                niceLimitLimitedDTO.setLimitedStatusCode(limitedStatusCode);
-                niceLimitLimitedDTO.setLimitedContentType(limitedContentType);
-                niceLimitLimitedDTO.setLimitedMessage(limitedMessage);
-
-                return niceLimitLimitedDTO;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @return 是否要限流
-     */
-    private boolean limitRequired(String url) {
-        if (newProperty.getDebug()) {
-            log.info("nicelimit judge limitRequired start. url:{}", url);
-        }
-
-        // 如果是禁止的URL，直接限流
-        if (!CollectionUtils.isEmpty(newProperty.getForbidUrl())
-                && newProperty.getForbidUrl().contains(url)) {
-            if (newProperty.getDebug()) {
-                log.info("nicelimit limit is required: url{} is in forbid url", url);
-            }
-            return true;
-        }
-
-        NiceLimitDetailProperty niceLimitDetailProperty = null;
-        // 如果没有限流配置，则不限流
-        if (!CollectionUtils.isEmpty(detailPropertyMap)) {
-            niceLimitDetailProperty = detailPropertyMap.get(url);
-            if (niceLimitDetailProperty == null) {
-                if (newProperty.getDebug()) {
-                    log.info("nicelimit limit is not required: url({} is not in detail)", url);
-                }
-                return false;
-            }
-        }
-
-        if (niceLimitDetailProperty == null) {
-            return false;
-        }
-
-        RRateLimiter rateLimiter = rateLimiterMap.get(url);
-        if (rateLimiter == null) {
-            log.info("nicelimit rate limiter is null, recreate start. url:{}", url);
-            rateLimiter = doCreateRateLimiter(niceLimitDetailProperty);
-        }
-
-        if (rateLimiter != null) {
-            return !rateLimiter.tryAcquire();
-        } else {
-            // 正常不会到这里，为了保险，在这里不限流
-            log.error("nicelimit rateLimiter is null, even though recreate. url:{}", url);
-            return false;
-        }
     }
 
     public void doCheckAndUpdateConfig() {
@@ -212,6 +107,110 @@ public class NiceLimitHandler {
         }
     }
 
+    public NiceLimitLimitedDTO checkRateLimit(String url) {
+        if (newProperty.getDebug()) {
+            log.info("nicelimit checkRateLimiter. url:{}", url);
+        }
+
+        if (newProperty.getEnabled() == null
+                || !newProperty.getEnabled()) {
+            if (newProperty.getDebug()) {
+                log.info("nicelimit is not enabled, don't check rate limiter. url:{}", url);
+            }
+
+            return null;
+        }
+
+        try {
+            return doCheckRateLimit(url);
+        } catch (Exception e) {
+            log.error("nicelimit checkRateLimit error", e);
+        }
+
+        return null;
+    }
+
+    /**
+     * @return 是否限流
+     */
+    private NiceLimitLimitedDTO doCheckRateLimit(String url) {
+        NiceLimitLimitedDTO limitedDTO = checkByForbid(url);
+
+        if (limitedDTO != null) {
+            return limitedDTO;
+        }
+
+        return checkByRateLimiter(url);
+    }
+
+    private NiceLimitLimitedDTO checkByForbid(String url) {
+        if (newProperty.getDebug()) {
+            log.info("nicelimit checkByForbid start. url:{}", url);
+        }
+
+        if (CollectionUtils.isEmpty(forbidPropertyMap)) {
+            if (newProperty.getDebug()) {
+                log.info("nicelimit checkByForbid not limit(forbidPropertyMap is empty), url:{}", url);
+            }
+            return null;
+        }
+
+        NiceLimitForbidProperty niceLimitForbidProperty = forbidPropertyMap.get(url);
+        if (niceLimitForbidProperty == null) {
+            if (newProperty.getDebug()) {
+                log.info("nicelimit checkByForbid not limit(forbidProperty is null), url:{}", url);
+            }
+            return null;
+        }
+
+        return toDTO(niceLimitForbidProperty);
+    }
+
+    private NiceLimitLimitedDTO checkByRateLimiter(String url) {
+        if (newProperty.getDebug()) {
+            log.info("nicelimit checkByRateLimiter start. url:{}", url);
+        }
+
+        NiceLimitRateLimiterProperty niceLimitRateLimiterProperty = null;
+        // 如果没有限流配置，则不限流
+        if (!CollectionUtils.isEmpty(rateLimiterPropertyMap)) {
+            niceLimitRateLimiterProperty = rateLimiterPropertyMap.get(url);
+            if (niceLimitRateLimiterProperty == null) {
+                if (newProperty.getDebug()) {
+                    log.info("nicelimit rateLimiter limit is not required: url{} is not in rateLimiter config", url);
+                }
+                return null;
+            }
+        }
+
+        if (niceLimitRateLimiterProperty == null) {
+            return null;
+        }
+
+        RRateLimiter rateLimiter = rateLimiterMap.get(url);
+        if (rateLimiter == null) {
+            log.info("nicelimit rateLimiter is null, recreate start. url:{}", url);
+            rateLimiter = doCreateRateLimiter(niceLimitRateLimiterProperty);
+        }
+
+        if (rateLimiter != null) {
+            boolean limited = !rateLimiter.tryAcquire();
+            if (limited) {
+                NiceLimitRateLimiterProperty rateLimiterProperty =
+                        CollectionUtils.isEmpty(rateLimiterPropertyMap)
+                                ? null
+                                : rateLimiterPropertyMap.get(url);
+                return toDTO(rateLimiterProperty);
+            } else {
+                return null;
+            }
+        } else {
+            // 正常不会到这里，为了保险，在这里不限流
+            log.error("nicelimit rateLimiter is null, even though recreate. url:{}", url);
+            return null;
+        }
+    }
+
     /**
      * @return 是否需要更新本地
      */
@@ -229,11 +228,10 @@ public class NiceLimitHandler {
 
     private void updateLocalConfig(String newConfigJsonString) {
         oldProperty = JsonUtil.toObject(newConfigJsonString, NiceLimitProperty.class);
-        List<NiceLimitDetailProperty> detailList = newProperty.getDetail();
-        if (!CollectionUtils.isEmpty(detailList)) {
-            detailPropertyMap = detailList.stream()
-                    .collect(Collectors.toMap(NiceLimitDetailProperty::getUrl, Function.identity()));
-        }
+
+        updateLocalForbidPropertyMap();
+
+        updateLocalRateLimiterPropertyMap();
     }
 
     private void deleteOldRateLimiter(NiceLimitProperty remoteProperty) {
@@ -248,7 +246,7 @@ public class NiceLimitHandler {
             return;
         }
 
-        List<NiceLimitDetailProperty> detailList = remoteProperty.getDetail();
+        List<NiceLimitRateLimiterProperty> detailList = remoteProperty.getRateLimiter();
         if (CollectionUtils.isEmpty(detailList)) {
             if (newProperty.getDebug()) {
                 log.info("nicelimit don't delete old rate limiter(remote property detail is empty)");
@@ -256,7 +254,7 @@ public class NiceLimitHandler {
             return;
         }
 
-        for (NiceLimitDetailProperty detailProperty : detailList) {
+        for (NiceLimitRateLimiterProperty detailProperty : detailList) {
             RRateLimiter rateLimiter = redissonClient.getRateLimiter(
                     buildRateLimiterKey(remoteProperty, detailProperty.getUrl()));
             rateLimiter.delete();
@@ -278,7 +276,7 @@ public class NiceLimitHandler {
             log.info("nicelimit clear old rateLimiterMap");
         }
 
-        List<NiceLimitDetailProperty> detailList = newProperty.getDetail();
+        List<NiceLimitRateLimiterProperty> detailList = newProperty.getRateLimiter();
         if (CollectionUtils.isEmpty(detailList)) {
             if (newProperty.getDebug()) {
                 log.info("nicelimit don't create new rate limiter(detail property is empty)");
@@ -286,7 +284,7 @@ public class NiceLimitHandler {
             return;
         }
 
-        for (NiceLimitDetailProperty detailProperty : detailList) {
+        for (NiceLimitRateLimiterProperty detailProperty : detailList) {
             doCreateRateLimiter(detailProperty);
         }
     }
@@ -296,7 +294,7 @@ public class NiceLimitHandler {
         return property.getLimiterKeyPrefix() + ":" + url;
     }
 
-    private RRateLimiter doCreateRateLimiter(NiceLimitDetailProperty detailProperty) {
+    private RRateLimiter doCreateRateLimiter(NiceLimitRateLimiterProperty detailProperty) {
         RRateLimiter rateLimiter = redissonClient.getRateLimiter(
                 buildRateLimiterKey(newProperty, detailProperty.getUrl()));
         // 返回true表示新建，false表示已存在
@@ -314,5 +312,54 @@ public class NiceLimitHandler {
         }
 
         return rateLimiter;
+    }
+
+    private void updateLocalForbidPropertyMap() {
+        List<NiceLimitForbidProperty> forbidProperties = newProperty.getForbid();
+        if (!CollectionUtils.isEmpty(forbidProperties)) {
+            forbidPropertyMap = forbidProperties.stream()
+                    .collect(Collectors.toMap(NiceLimitForbidProperty::getUrl, Function.identity()));
+            if (newProperty.getDebug()) {
+                log.info("nicelimit updateLocalForbidPropertyMap as: {}", JsonUtil.toJsonString(forbidPropertyMap));
+            }
+        }
+    }
+
+    private void updateLocalRateLimiterPropertyMap() {
+        List<NiceLimitRateLimiterProperty> rateLimiterProperties = newProperty.getRateLimiter();
+        if (!CollectionUtils.isEmpty(rateLimiterProperties)) {
+            rateLimiterPropertyMap = rateLimiterProperties.stream()
+                    .collect(Collectors.toMap(NiceLimitRateLimiterProperty::getUrl, Function.identity()));
+            if (newProperty.getDebug()) {
+                log.info("nicelimit updateLocalRateLimiterPropertyMap as: {}", JsonUtil.toJsonString(rateLimiterPropertyMap));
+            }
+        }
+    }
+
+    private NiceLimitLimitedDTO toDTO(NiceLimitResponseCommonProperty detailProperty) {
+        Integer limitedStatusCode = newProperty.getLimitedStatusCode();
+        String limitedContentType = newProperty.getLimitedContentType();
+        String limitedMessage = newProperty.getLimitedMessage();
+
+        if (detailProperty != null) {
+            if (detailProperty.getLimitedStatusCode() != null) {
+                limitedStatusCode = detailProperty.getLimitedStatusCode();
+            }
+
+            if (StringUtils.hasText(detailProperty.getLimitedContentType())) {
+                limitedContentType = detailProperty.getLimitedContentType();
+            }
+
+            if (StringUtils.hasText(detailProperty.getLimitedMessage())) {
+                limitedMessage = detailProperty.getLimitedMessage();
+            }
+        }
+
+        NiceLimitLimitedDTO niceLimitLimitedDTO = new NiceLimitLimitedDTO();
+        niceLimitLimitedDTO.setLimitedStatusCode(limitedStatusCode);
+        niceLimitLimitedDTO.setLimitedContentType(limitedContentType);
+        niceLimitLimitedDTO.setLimitedMessage(limitedMessage);
+
+        return niceLimitLimitedDTO;
     }
 }
