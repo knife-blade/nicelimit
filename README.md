@@ -4,14 +4,15 @@
 
 nicelimit：限流工具，零代码（基于Redisson，稳定！）。
 
-特性
+**特性**
 
 1. 支持接口、前后端一体的静态路径。
 2. 支持两种模式：单实例、所有实例（分布式）。
-3. 支持URL白名单。
-4. 支持动态更新配置（需搭配Nacos或Apollo）。
-5. 无需写代码，完全由配置文件控制。
-6. 支持自定义限流的返回：状态码、ContentType、提示语
+3. 支持动态更新配置（需搭配Nacos或Apollo）。
+4. 无需写代码，完全由配置文件控制。
+5. 支持自定义限流的返回：状态码、ContentType、提示语。
+6. 支持两种限制模式：禁止访问（一个都不允许）、限流。
+7. 极致的性能，对业务几乎零损耗。
 
 ## 2.快速使用
 
@@ -37,9 +38,10 @@ spring:
 ### 2.3 配置nicelimit
 
 目标：
-1. /aa/bb接口，10秒内只能有5个请求 
-2. /aa/cc接口，5秒内只能有10个请求 
-3. 禁止访问/aa/dd接口、/aa/ee接口
+1. 禁止访问/aa/aaa1，返回状态码为200，json格式返回
+2. 禁止访问/aa/aaa2，返回状态码为429，text/plain格式返回
+3. 限流：/bb/bbb1，10秒内只能有5个请求，若超过，则返回状态码为200，json格式返回
+3. 限流：/bb/bbb2，5秒内只能有10个请求，若超过，则返回状态码为429，text/plain格式返回
 
 配置如下：
 
@@ -87,31 +89,31 @@ suchtool:
 #### 4.1总览
 
 | 配置                  | 描述      | 默认值                |
-|-----------------------|-----------|----------------------------------|
-| suchtool.nicelimit.inject        | 是否注入（是否注入容器）            | true      |
-| suchtool.nicelimit.enabled       | 是否启用（inject为true时，才有效）  | true      |
-| suchtool.nicelimit.debug         | 是否启用调试模式          | false               |
-| suchtool.nicelimit.type               | 类型。必须指定。目前只支持SERVLET，后续会支持gateway等  | null  |
-| suchtool.nicelimit.limited-status-code   | 被限流的状态码              | 429             |
-| suchtool.nicelimit.limited-content-type  | 被限流的内容类型            | text/plain;charset=UTF-8         |
-| suchtool.nicelimit.limited-message       | 被限流的提示信息            | 哎呀，访问量好大，请稍后再试试吧~  |
-| suchtool.nicelimit.config-key            | 配置的key                   | niceLimit:config                 |
-| suchtool.nicelimit.update-lock-key       | 更新时用的锁的key（异步加锁，不影响业务性能）| niceLimit:update-lock   |
-| suchtool.nicelimit.limiter-key-prefix    | 限流器的key前缀              | niceLimit:limiter               |
-| suchtool.nicelimit.forbid       | 禁止访问                    | null  |
-| suchtool.nicelimit.rate-limiter       | 限流  | null  |
-| suchtool.nicelimit.filter                | 过滤器配置       | null |
+|-----------------------|-----------|-----------------------|
+| suchtool.nicelimit.inject        | 是否注入（是否注入容器）            | true |
+| suchtool.nicelimit.enabled       | 是否启用（inject为true时，才有效）  | true |
+| suchtool.nicelimit.debug         | 是否启用调试模式    | false |
+| suchtool.nicelimit.type          | 类型。必须指定。目前只支持SERVLET，后续会支持gateway等 | null |
+| suchtool.nicelimit.limited-status-code   | 被限流的状态码      | 429 |
+| suchtool.nicelimit.limited-content-type  | 被限流的内容类型    | text/plain;charset=UTF-8   |
+| suchtool.nicelimit.limited-message       | 被限流的提示信息    | 哎呀，访问量好大，请稍后再试试吧~  |
+| suchtool.nicelimit.config-key            | 配置的key           | niceLimit:config                 |
+| suchtool.nicelimit.update-lock-key       | 更新配置时锁的key（不影响业务性能）| niceLimit:update-lock |
+| suchtool.nicelimit.limiter-key-prefix    | 限流器的key前缀     | niceLimit:limiter |
+| suchtool.nicelimit.forbid       | 禁止访问的配置  | null  |
+| suchtool.nicelimit.rate-limiter | 限流的配置  | null  |
+| suchtool.nicelimit.filter       | 过滤器配置。suchtool.nicelimit.type为SERVLET时可指定 | null |
 
 #### 4.2 禁止访问
 
 suchtool.nicelimit.forbid配置：
 
-| 配置           | 描述                  | 举例       |
+| 配置           | 描述                | 默认值     |
 |----------------|---------------------|------------|
-| url            | URL（不支持通配符，为了极致的效率） | /aa/bb |
-| limited-status-code   | 被禁止时的状态码             | null  |
-| limited-content-type  | 被禁止时的内容类型            | null  |
-| limited-message       | 被禁止时的提示信息            | null  |
+| url            | URL（不支持通配符，为了极致的效率） | null |
+| limited-status-code   | 被禁止时的状态码   | null  |
+| limited-content-type  | 被禁止时的内容类型 | null  |
+| limited-message       | 被禁止时的提示信息 | null  |
 
 如果forbid里的limited-status-code、limited-content-type、limited-message没配置，则取顶层（suchtool.nicelimit.xxx）的配置。
 
@@ -119,15 +121,15 @@ suchtool.nicelimit.forbid配置：
 
 suchtool.nicelimit.rate-limiter配置：
 
-| 配置           | 描述                   | 举例       |
+| 配置           | 描述                   | 默认值     |
 |----------------|------------------------|------------|
-| url            | URL（不支持通配符，为了极致的效率） | /aa/bb |
-| rate-type      | 速度类型：OVERALL（全实例），PER_CLIENT（单实例） | 略   |
-| rate-interval  | 速度间隔（单位时间）   | 10s |
-| rate           | 速度（数量）           | 5   |
-| limited-status-code   | 被禁止时的状态码      | null  |
-| limited-content-type  | 被禁止时的内容类型    | null  |
-| limited-message       | 被禁止时的提示信息    | null  |
+| url            | URL（不支持通配符，为了极致的效率） | null |
+| rate-type      | 速度类型：OVERALL（全实例），PER_CLIENT（单实例） | null |
+| rate-interval  | 速度间隔（单位时间）。比如：10s   | null |
+| rate           | 速度（数量）           | null |
+| limited-status-code   | 被禁止时的状态码      | null |
+| limited-content-type  | 被禁止时的内容类型    | null |
+| limited-message       | 被禁止时的提示信息    | null |
 
 如果rate-limiter里的limited-status-code、limited-content-type、limited-message没配置，则取顶层（suchtool.nicelimit.xxx）的配置。
 
@@ -136,16 +138,17 @@ suchtool.nicelimit.rate-limiter配置：
 如果suchtool.nicelimit.type为SERVLET，则可以配置过滤器。
 
 suchtool.nicelimit.filter的配置：
-| 配置           | 描述                   | 举例       |
+
+| 配置           | 描述                   | 默认值       |
 |----------------|------------------------|------------|
-| filter-pattern        | 过滤器匹配模式（支持通配符） | ["/*"]             |
-| filter-name           | 过滤器名字                   | niceLimitFilter    |
-| filter-order          | 过滤器顺序                   | null               |
+| filter-pattern | 过滤器匹配模式（支持通配符） | ["/*"]             |
+| filter-name    | 过滤器名字       | niceLimitFilter    |
+| filter-order   | 过滤器顺序       | null               |
 
 
 ## 5.原理
 
-禁止访问：suchtool.nicelimit.forbid-url直接会报错。报错信息是suchtool.nicelimit.limitedxxx
-限流：使用Redisson的RRateLimiter进行限流。
+禁止访问：suchtool.nicelimit.forbid会禁止访问。
+限流：suchtool.nicelimit.rate-limiter使用Redisson的RRateLimiter进行限流。
 
 SERVLET类型：注入一个Filter，对请求进行处理。
