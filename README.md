@@ -97,9 +97,9 @@ suchtool:
 | suchtool.nicelimit.limited-status-code   | 被限流的状态码      | 429 |
 | suchtool.nicelimit.limited-content-type  | 被限流的内容类型    | text/plain;charset=UTF-8   |
 | suchtool.nicelimit.limited-message       | 被限流的提示信息    | 哎呀，访问量好大，请稍后再试试吧~  |
-| suchtool.nicelimit.config-key            | 配置的key           | niceLimit:config                 |
-| suchtool.nicelimit.update-lock-key       | 更新配置时锁的key（不影响业务性能）| niceLimit:update-lock |
-| suchtool.nicelimit.limiter-key-prefix    | 限流器的key前缀     | niceLimit:limiter |
+| suchtool.nicelimit.config-key            | 配置的key           | nicelimit:config                 |
+| suchtool.nicelimit.update-lock-key       | 更新配置时锁的key（不影响业务性能）| nicelimit:update-lock |
+| suchtool.nicelimit.limiter-key-prefix    | 限流器的key前缀     | nicelimit:rate-limit |
 | suchtool.nicelimit.forbid       | 禁止访问的配置  | null  |
 | suchtool.nicelimit.rate-limiter | 限流的配置  | null  |
 | suchtool.nicelimit.filter       | 过滤器配置。suchtool.nicelimit.type为SERVLET时可指定 | null |
