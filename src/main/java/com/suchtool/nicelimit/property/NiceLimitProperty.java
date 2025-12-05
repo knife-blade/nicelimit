@@ -46,17 +46,17 @@ public class NiceLimitProperty{
     /**
      * 配置的key
      */
-    private String configKey = "niceLimit:config";
+    private String configKey = "nicelimit:config";
 
     /**
      * 更新时用的锁的key（异步加锁，不影响业务性能）
      */
-    private String updateLockKey = "niceLimit:update-lock";
+    private String updateLockKey = "nicelimit:update-lock";
 
     /**
      * 限流器的key前缀
      */
-    private String limiterKeyPrefix = "niceLimit:limiter";
+    private String limiterKeyPrefix = "nicelimit:rate-limit";
 
     /**
      * 禁止访问
