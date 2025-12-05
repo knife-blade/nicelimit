@@ -12,7 +12,7 @@
 
     <groupId>com.suchtool</groupId>
     <artifactId>nicelimit-spring-boot-starter</artifactId>
-    <version>1.0.16</version>
+    <version>1.0.17</version>
 
     <packaging>jar</packaging>
     <name>nicelimit-spring-boot-starter</name>
@@ -59,7 +59,7 @@
         <dependency>
             <groupId>com.suchtool</groupId>
             <artifactId>nicetool-spring-boot-starter</artifactId>
-            <version>1.1.28</version>
+            <version>1.1.32</version>
         </dependency>
 
         <dependency>
