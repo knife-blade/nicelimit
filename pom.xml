@@ -12,11 +12,11 @@
 
     <groupId>com.suchtool</groupId>
     <artifactId>nicelimit-spring-boot-starter</artifactId>
-    <version>1.0.18</version>
+    <version>1.0.19</version>
 
     <packaging>jar</packaging>
     <name>nicelimit-spring-boot-starter</name>
-    <description>Nice rate limiter for SpringBoot project</description>
+    <description>Nice rate limit for SpringBoot project</description>
 
     <url>https://github.com/knife-blade/nicelimit</url>
 
