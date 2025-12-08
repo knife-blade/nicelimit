@@ -2,7 +2,6 @@ package com.suchtool.nicelimit.property;
 
 import com.suchtool.nicelimit.constant.NiceLimitType;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
@@ -56,7 +55,7 @@ public class NiceLimitProperty{
     /**
      * 限流器的key前缀
      */
-    private String limiterKeyPrefix = "nicelimit:rate-limit";
+    private String rateLimiterKeyPrefix = "nicelimit:rate-limiter";
 
     /**
      * 禁止访问
@@ -66,7 +65,7 @@ public class NiceLimitProperty{
     /**
      * 限流
      */
-    private List<NiceLimitRateLimiterProperty> rateLimiter;
+    private List<NiceLimitRateLimiterProperty> rateLimit;
 
     /**
      * 过滤器配置

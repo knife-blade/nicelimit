@@ -246,7 +246,7 @@ public class NiceLimitHandler {
             return;
         }
 
-        List<NiceLimitRateLimiterProperty> detailList = remoteProperty.getRateLimiter();
+        List<NiceLimitRateLimiterProperty> detailList = remoteProperty.getRateLimit();
         if (CollectionUtils.isEmpty(detailList)) {
             if (newProperty.getDebug()) {
                 log.info("nicelimit don't delete old rate limiter(remote property detail is empty)");
@@ -276,7 +276,7 @@ public class NiceLimitHandler {
             log.info("nicelimit clear old rateLimiterMap");
         }
 
-        List<NiceLimitRateLimiterProperty> detailList = newProperty.getRateLimiter();
+        List<NiceLimitRateLimiterProperty> detailList = newProperty.getRateLimit();
         if (CollectionUtils.isEmpty(detailList)) {
             if (newProperty.getDebug()) {
                 log.info("nicelimit don't create new rate limiter(detail property is empty)");
@@ -291,7 +291,7 @@ public class NiceLimitHandler {
 
     private String buildRateLimiterKey(NiceLimitProperty property,
                                        String url) {
-        return property.getLimiterKeyPrefix() + ":" + url;
+        return property.getRateLimiterKeyPrefix() + ":" + url;
     }
 
     private RRateLimiter doCreateRateLimiter(NiceLimitRateLimiterProperty detailProperty) {
@@ -326,7 +326,7 @@ public class NiceLimitHandler {
     }
 
     private void updateLocalRateLimiterPropertyMap() {
-        List<NiceLimitRateLimiterProperty> rateLimiterProperties = newProperty.getRateLimiter();
+        List<NiceLimitRateLimiterProperty> rateLimiterProperties = newProperty.getRateLimit();
         if (!CollectionUtils.isEmpty(rateLimiterProperties)) {
             rateLimiterPropertyMap = rateLimiterProperties.stream()
                     .collect(Collectors.toMap(NiceLimitRateLimiterProperty::getUrl, Function.identity()));
