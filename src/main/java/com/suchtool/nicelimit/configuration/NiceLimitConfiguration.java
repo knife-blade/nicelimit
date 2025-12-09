@@ -1,21 +1,21 @@
 package com.suchtool.nicelimit.configuration;
 
 
-import com.suchtool.nicelimit.property.NiceLimitFilterProperty;
-import com.suchtool.nicelimit.runner.NiceLimitApplicationRunner;
-import com.suchtool.nicelimit.listener.NiceLimitEnvironmentChangeEventListener;
-import com.suchtool.nicelimit.filter.NiceLimitFilter;
+import com.suchtool.nicelimit.filter.NiceLimitFilterJakarta;
+import com.suchtool.nicelimit.filter.NiceLimitFilterJavax;
 import com.suchtool.nicelimit.handler.NiceLimitHandler;
+import com.suchtool.nicelimit.listener.NiceLimitEnvironmentChangeEventListener;
+import com.suchtool.nicelimit.property.NiceLimitFilterProperty;
 import com.suchtool.nicelimit.property.NiceLimitProperty;
+import com.suchtool.nicelimit.runner.NiceLimitApplicationRunner;
 import org.redisson.api.RedissonClient;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.util.CollectionUtils;
 
-import java.util.List;
+import javax.servlet.Filter;
 
 @Configuration(value = "com.suthtool.nicelimit.niceLimitConfiguration", proxyBeanMethods = false)
 @ConditionalOnProperty(name = "suchtool.nicelimit.inject", havingValue = "true")
@@ -45,29 +45,41 @@ public class NiceLimitConfiguration {
         return new NiceLimitApplicationRunner(niceLimitHandler);
     }
 
-    @Bean(name = "com.suchtool.nicelimit.niceLimitFilterRegistration")
-    @ConditionalOnProperty(name = "suchtool.nicelimit.type", havingValue = "SERVLET")
-    public FilterRegistrationBean<?> filterRegistrationBean(NiceLimitHandler niceLimitHandler,
-                                                            NiceLimitProperty niceLimitProperty) {
-        FilterRegistrationBean<?> filterRegistrationBean = new FilterRegistrationBean<>(
-                new NiceLimitFilter(niceLimitHandler));
-        NiceLimitFilterProperty filter = niceLimitProperty.getFilter();
-        if (filter == null) {
-            filter = new NiceLimitFilterProperty();
-        }
-
-        List<String> filterPatternList = filter.getFilterPattern();
-        if (!CollectionUtils.isEmpty(filterPatternList)) {
-            for (String pattern : filterPatternList) {
-                filterRegistrationBean.addUrlPatterns(pattern);
+    /**
+     * SpringBoot2
+     */
+    @Configuration(value = "com.suchtool.nicelimit.niceLimitFilterJavaxConfiguration", proxyBeanMethods = false)
+    @ConditionalOnClass(Filter.class)
+    @ConditionalOnProperty(name = "suchtoolnicelimit.type", havingValue = "SERVLET")
+    protected static class NiceLimitFilterJavaxConfiguration {
+        @Bean(name = "com.suchtool.nicelimit.niceLimitFilterJavax")
+        public NiceLimitFilterJavax niceLimitFilterJavax(NiceLimitHandler niceLimitHandler,
+                                                         NiceLimitProperty niceLimitProperty) {
+            NiceLimitFilterProperty filter = niceLimitProperty.getFilter();
+            if (filter == null) {
+                filter = new NiceLimitFilterProperty();
             }
-        }
-        filterRegistrationBean.setName(filter.getFilterName());
-        if (filter.getFilterOrder() != null) {
-            // 过滤器执行顺序（决定doFilter顺序，不决定init和destroy顺序）
-            filterRegistrationBean.setOrder(filter.getFilterOrder());
-        }
 
-        return filterRegistrationBean;
+            return new NiceLimitFilterJavax(niceLimitHandler, filter.getFilterOrder());
+        }
+    }
+
+    /**
+     * SpringBoot3
+     */
+    @Configuration(value = "com.suchtool.nicelimit.niceLimitFilterJakartaConfiguration", proxyBeanMethods = false)
+    @ConditionalOnClass(jakarta.servlet.Filter.class)
+    @ConditionalOnProperty(name = "suchtoolnicelimit.type", havingValue = "SERVLET")
+    protected static class NiceLimitFilterJakartaConfiguration {
+        @Bean(name = "com.suchtool.nicelimit.niceLimitFilterJakarta")
+        public NiceLimitFilterJakarta niceLimitFilterJakarta(NiceLimitHandler niceLimitHandler,
+                                                             NiceLimitProperty niceLimitProperty) {
+            NiceLimitFilterProperty filter = niceLimitProperty.getFilter();
+            if (filter == null) {
+                filter = new NiceLimitFilterProperty();
+            }
+
+            return new NiceLimitFilterJakarta(niceLimitHandler, filter.getFilterOrder());
+        }
     }
 }

@@ -21,6 +21,5 @@ public class NiceLimitApplicationRunner implements ApplicationRunner {
         } catch (Exception e) {
             log.error("nicelimit application runner error", e);
         }
-
     }
 }

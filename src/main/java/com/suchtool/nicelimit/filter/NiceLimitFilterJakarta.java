@@ -2,21 +2,30 @@ package com.suchtool.nicelimit.filter;
 
 import com.suchtool.nicelimit.dto.NiceLimitLimitedDTO;
 import com.suchtool.nicelimit.handler.NiceLimitHandler;
-import com.suchtool.nicelimit.property.NiceLimitProperty;
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
 
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Slf4j
-public class NiceLimitFilter implements Filter {
+public class NiceLimitFilterJakarta implements Filter, Ordered {
 
     private final NiceLimitHandler niceLimitHandler;
 
-    public NiceLimitFilter(NiceLimitHandler niceLimitHandler) {
+    private final Integer order;
+
+    public NiceLimitFilterJakarta(NiceLimitHandler niceLimitHandler,
+                                  Integer order) {
         this.niceLimitHandler = niceLimitHandler;
+        this.order = order;
+    }
+
+    @Override
+    public int getOrder() {
+        return this.order;
     }
 
     @Override
