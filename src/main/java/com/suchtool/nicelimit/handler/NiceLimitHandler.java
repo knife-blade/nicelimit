@@ -107,9 +107,9 @@ public class NiceLimitHandler {
         }
     }
 
-    public NiceLimitLimitedDTO checkRateLimit(String url) {
+    public NiceLimitLimitedDTO checkLimit(String url) {
         if (newProperty.getDebug()) {
-            log.info("nicelimit checkRateLimiter. url:{}", url);
+            log.info("nicelimit checkLimit. url:{}", url);
         }
 
         if (newProperty.getEnabled() == null
@@ -122,9 +122,9 @@ public class NiceLimitHandler {
         }
 
         try {
-            return doCheckRateLimit(url);
+            return doCheckLimit(url);
         } catch (Exception e) {
-            log.error("nicelimit checkRateLimit error", e);
+            log.error("nicelimit checkLimit error", e);
         }
 
         return null;
@@ -133,24 +133,24 @@ public class NiceLimitHandler {
     /**
      * @return 是否限流
      */
-    private NiceLimitLimitedDTO doCheckRateLimit(String url) {
+    private NiceLimitLimitedDTO doCheckLimit(String url) {
         NiceLimitLimitedDTO limitedDTO = checkByForbid(url);
 
         if (limitedDTO != null) {
             return limitedDTO;
         }
 
-        return checkByRateLimiter(url);
+        return checkByRateLimit(url);
     }
 
     private NiceLimitLimitedDTO checkByForbid(String url) {
         if (newProperty.getDebug()) {
-            log.info("nicelimit checkByForbid start. url:{}", url);
+            log.debug("nicelimit checkByForbid start. url:{}", url);
         }
 
         if (CollectionUtils.isEmpty(forbidPropertyMap)) {
             if (newProperty.getDebug()) {
-                log.info("nicelimit checkByForbid not limit(forbidPropertyMap is empty), url:{}", url);
+                log.debug("nicelimit checkByForbid not limit(forbidPropertyMap is empty), url:{}", url);
             }
             return null;
         }
@@ -158,17 +158,20 @@ public class NiceLimitHandler {
         NiceLimitForbidProperty niceLimitForbidProperty = forbidPropertyMap.get(url);
         if (niceLimitForbidProperty == null) {
             if (newProperty.getDebug()) {
-                log.info("nicelimit checkByForbid not limit(forbidProperty is null), url:{}", url);
+                log.debug("nicelimit checkByForbid not limit(forbidProperty is null), url:{}", url);
             }
             return null;
         }
 
-        return toDTO(niceLimitForbidProperty);
+        NiceLimitLimitedDTO dto = toDTO(niceLimitForbidProperty);
+        log.info("nicelimit limited by checkByForbid. url:{}, return: {}", url, JsonUtil.toJsonString(dto));
+
+        return dto;
     }
 
-    private NiceLimitLimitedDTO checkByRateLimiter(String url) {
+    private NiceLimitLimitedDTO checkByRateLimit(String url) {
         if (newProperty.getDebug()) {
-            log.info("nicelimit checkByRateLimiter start. url:{}", url);
+            log.debug("nicelimit checkByRateLimit start. url:{}", url);
         }
 
         NiceLimitRateLimiterProperty niceLimitRateLimiterProperty = null;
@@ -177,7 +180,7 @@ public class NiceLimitHandler {
             niceLimitRateLimiterProperty = rateLimiterPropertyMap.get(url);
             if (niceLimitRateLimiterProperty == null) {
                 if (newProperty.getDebug()) {
-                    log.info("nicelimit rateLimiter limit is not required: url{} is not in rateLimiter config", url);
+                    log.debug("nicelimit rateLimit limit is not required: url{} is not in rateLimiter config", url);
                 }
                 return null;
             }
@@ -200,7 +203,9 @@ public class NiceLimitHandler {
                         CollectionUtils.isEmpty(rateLimiterPropertyMap)
                                 ? null
                                 : rateLimiterPropertyMap.get(url);
-                return toDTO(rateLimiterProperty);
+                NiceLimitLimitedDTO dto = toDTO(rateLimiterProperty);
+                log.info("nicelimit limited by checkByRateLimit. url:{}, return: {}", url, JsonUtil.toJsonString(dto));
+                return dto;
             } else {
                 return null;
             }

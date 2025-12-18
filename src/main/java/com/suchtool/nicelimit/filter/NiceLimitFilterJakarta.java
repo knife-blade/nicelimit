@@ -53,7 +53,7 @@ public class NiceLimitFilterJakarta implements Filter, Ordered {
             HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
             String url = httpServletRequest.getRequestURI();
 
-            NiceLimitLimitedDTO niceLimitLimitedDTO = niceLimitHandler.checkRateLimit(url);
+            NiceLimitLimitedDTO niceLimitLimitedDTO = niceLimitHandler.checkLimit(url);
 
             if (niceLimitLimitedDTO != null) {
                 if (servletResponse instanceof HttpServletResponse) {
